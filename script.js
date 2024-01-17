@@ -404,7 +404,7 @@ const reRender = () => {
                 const children = childrens[j];  
 
                 if(classOption2[j] !== undefined && classOption2[j] !== '') {
-                    children.classList.add(classOption2[j]);
+                    children.className = `${classOption2[j]}`;
                 } else {
                     children.className = '';
                     children.removeAttribute('class');
