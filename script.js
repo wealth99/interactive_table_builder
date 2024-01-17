@@ -1,5 +1,6 @@
 let isUpdate = false;
 let isDelete = false;
+let isRender = false;
 let currentTarget;
 let classOption = [];
 let classOption2 = [];
@@ -9,6 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const options2 = document.querySelectorAll('.option2');
     const init = document.querySelector('.init');
     const action = document.querySelector('.action');
+    const partChange = document.querySelector('.part-change');
     const reAction = document.querySelector('.re-action');
     const copy = document.querySelector('.copy');
     const add = document.querySelector('.add');
@@ -17,6 +19,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const targetDelete = document.querySelector('.target-detail-popup .init');
     const closePopup = document.querySelector('.target-detail-popup .close');
     const textarea = document.querySelector('.target-detail-popup textarea');
+    const changeUpdate = document.querySelector('.part-change-popup .action'); 
+    const closeChange = document.querySelector('.part-change-popup .close'); 
     
     init.addEventListener('click', reset);
     action.addEventListener('click', render);
@@ -29,6 +33,10 @@ document.addEventListener('DOMContentLoaded', () => {
     targetUpdate.addEventListener('click', updateTarget);
     closePopup.addEventListener('click', closeDetailPopup);
 
+    partChange.addEventListener('click', openPartChagePopup);
+    changeUpdate.addEventListener('click', updateChange);
+    closeChange.addEventListener('click', closePartChangePopup)
+
     options.forEach(option => option.addEventListener('change', setClassOption));
     options2.forEach(option => option.addEventListener('change', setClassOption2));
 
@@ -37,7 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('click', handleDocumentClick);
 });
 
-// textarea 키보드 이벤트
+// textarea 키보드 이벤트 (사용 X)
 const handleTextareaKeydown = e => {
     const target = e.target;
 
@@ -90,8 +98,14 @@ const updateTarget = () => {
     const addTag = popup.querySelector('.tag');
     
     currentTarget.textContent = text.value;
-    _class.value !== '' ? currentTarget.className = `${_class.value}` : currentTarget.className = '';
-    colspan.value !== '' ?  currentTarget.setAttribute('colspan', `${colspan.value}`) : currentTarget.removeAttribute('colspan');
+
+    if(_class.value !== '') {
+        currentTarget.className = `${_class.value}`;
+    } else {
+        currentTarget.className = '';
+    }
+
+    colspan.value !== '' ? currentTarget.setAttribute('colspan', `${colspan.value}`) : currentTarget.removeAttribute('colspan');
     rowspan.value !== '' ? currentTarget.setAttribute('rowspan', `${rowspan.value}`) : currentTarget.removeAttribute('rowspan');
     currentTarget.insertAdjacentHTML('beforeend', addTag.value);
 
@@ -139,7 +153,7 @@ const setDetailPopupData = data => {
     addTag.value = data.addTag ? data.addTag() : '';
 }
 
-// 팝업 닫기
+// 팝업 닫기 (target-datial-popup)
 const closeDetailPopup = () => {
     const popup = document.querySelector('.target-detail-popup');
 
@@ -149,12 +163,12 @@ const closeDetailPopup = () => {
     if(!currentTarget) return;
 
     currentTarget.classList.remove('target');
-    (currentTarget.className === '' || currentTarget.className.split(' ').length === 0) && currentTarget.removeAttribute('class');
+    currentTarget.className === '' || currentTarget.className.split(' ').length === 0 && currentTarget.removeAttribute('class');
 
     currentTarget = null;
 }
 
-// 팝업 열기
+// 팝업 열기 (target-datial-popup)
 const openDetailPopup = e => {
     e.stopPropagation();
     if(e.target.nodeName === 'TABLE') return;
@@ -165,12 +179,13 @@ const openDetailPopup = e => {
     }
 
     const popup = document.querySelector('.target-detail-popup');
+    const popupStyle = window.getComputedStyle(popup);
     const target = e.target.nodeName !== "TD" && e.target.nodeName !== "TH" ? e.target.closest('td') : e.target;
     const targetRect = target.getBoundingClientRect();
     const data = getTargetData(target);
     const scrollMove = () => {
-        if(targetRect.top + parseInt(window.getComputedStyle(popup).height, 10) > window.innerHeight) {
-            let diifY = targetRect.top + parseInt(window.getComputedStyle(popup).height, 10) - window.innerHeight;
+        if(targetRect.top + parseInt(popupStyle.height, 10) > window.innerHeight) {
+            let diifY = targetRect.top + parseInt(popupStyle.height, 10) - window.innerHeight;
             let addY = 200;
 
             window.scrollTo(0, window.scrollY + diifY + addY);
@@ -187,6 +202,57 @@ const openDetailPopup = e => {
     popup.classList.add('show');
 
     scrollMove();
+}
+
+// 일괄 변경
+const updateChange = () => {
+    const changeTag = document.querySelector('.change-tag');
+    const addAttribute = document.querySelector('.add-attribute');
+    const resultTable = document.querySelector('#result table');
+    const isChangeValue = changeTag.value !== '';
+    const matchResult = addAttribute.value.match(/([^=]+)="([^"]+)"/);
+    const isMatchResult = matchResult !== null;
+    const attributeName = isMatchResult && matchResult[1];
+    const attributeContent = isMatchResult && matchResult[2];
+
+    resultTable.querySelectorAll('tr').forEach(v => {
+        const td = v.children[0];
+        let changeElement;
+
+        if(isChangeValue) {
+            changeElement = document.createElement(`${changeTag.value}`);
+            changeElement.innerHTML = td.innerHTML;
+
+            isMatchResult && changeElement.setAttribute(attributeName, attributeContent);
+            td.parentNode.replaceChild(changeElement, td);
+        }
+
+        isMatchResult && td.setAttribute(attributeName, attributeContent);
+    });
+
+    closePartChangePopup();
+
+    changeTag.value = '';
+    addAttribute.value = '';
+
+    isUpdate = true;
+}
+
+// 팝업 닫기 (part-change-popup)
+const closePartChangePopup = () => {
+    const popup = document.querySelector('.part-change-popup');
+    popup.classList.remove('show');
+}
+
+// 팝업 열기 (part-change-popup)
+const openPartChagePopup = e => {
+    if(!isRender) {
+        alert('실행 후 가능합니다만...😒');
+        return;
+    }
+
+    const popup = document.querySelector('.part-change-popup');
+    popup.classList.add('show');
 }
 
 // 초기화
@@ -267,12 +333,17 @@ const render = () => {
     const html = textArray.reduce((acc, row, index) => {
         const cell = row.trim().split('\t');
         const isOptionValue = classOption[1]?.split(',').includes(`${index + 1}`);
-        const trClass = isClassOption && ((direction === 'forward' && isOptionValue) || (direction === 'reverse' && !isOptionValue)) ? ` class="${classOption[0]}"` : '';
+        const isOptionAll = classOption.includes('all');
+        const trClass = isClassOption 
+            && (direction === 'forward' && isOptionValue) || (direction === 'reverse' && !isOptionValue)
+            || isOptionAll
+            ? ` class="${classOption[0]}"` 
+            : '';
         
         acc += `        <tr${trClass}>\n`;
 
         for (let j = 0; j < cell.length; j++) {
-            const tdClass = (classCheck && classOption2[j] !== undefined && classOption2[j] !== '') ? ` class="${classOption2[j]}"` : '';
+            const tdClass = classCheck && classOption2[j] !== undefined && classOption2[j] !== '' ? ` class="${classOption2[j]}"` : '';
 
             acc += `            <td${tdClass}>${cell[j].trim()}</td>\n`;
         }
@@ -284,6 +355,8 @@ const render = () => {
 
     result.innerHTML = html;
     text.textContent = html;
+
+    isRender = true;
 }
 
 // table, text dom에 re render
@@ -305,6 +378,7 @@ const reRender = () => {
 
     text.textContent = result.innerHTML;
 
+    const isOptionAll = classOption.includes('all');
     const isClassOption = classOption.length > 0;
     const direction = getOrderDirection();
     const classCheck = isClassApply();
@@ -314,9 +388,15 @@ const reRender = () => {
         const tr = trs[i];
         const childrens = tr.children;
         const isOptionValue = classOption[1]?.split(',').includes(`${i + 1}`);
-
-        if(isClassOption && ((direction === 'forward' && isOptionValue) || (direction === 'reverse' && !isOptionValue))) {
+        
+        if(
+            isClassOption 
+            && ((direction === 'forward' && isOptionValue) || (direction === 'reverse' && !isOptionValue))
+            || isOptionAll
+        ) {
             tr.classList.add(classOption[0]);
+        } else {
+            tr.removeAttribute('class');
         }
 
         if(classCheck) {
