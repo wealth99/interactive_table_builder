@@ -372,7 +372,7 @@ const reRender = () => {
     }
 
     if(isDelete && classOption2.length > 0) {
-        alert('삭제한 DOM이 존재합니다...😒 \nTD 또는 TH의 클래스 옵션이 존재한다면 클래스가 정확하게 추가 안될 수 있습니다.');
+        alert('삭제한 DOM이 존재합니다...😒 \nTD 또는 TH의 클래스 옵션이 존재한다면 클래스가 정확하게 추가 안될 수 있습니다.(클래스 미적용도 같이)');
         isDelete = false;
     }
 
