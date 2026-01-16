@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>interactive_table_builder</title>
+    <link rel="stylesheet" href="./style.css">
+</head>
+
+<body>
+    <div class="toolbar">
+        <table>
+            <colgroup>
+                <col style="width: 20%;">
+                <col style="width: 80%;">
+            </colgroup>
+            <tbody>
+                <tr>
+                    <th>TR 클래스 특정 순서 옵션</th>
+                    <td>
+                        <fieldset>
+                            <input type="radio" id="radio-1" name="order" checked>
+                            <label for="radio-1">순서 지정(기본)</label>
+                            <input type="radio" id="radio-2" name="order">
+                            <label for="radio-2">순서 제외 지정</label>
+                        </fieldset>
+                        <input type="text" class="option" placeholder="class">
+                        <input type="text" class="option" placeholder="순서: 1,3,5,7,9 / 모두: all" style="width: 310px;">
+                    </td>
+                </tr>
+                <tr>
+                    <th>TD, TH 클래스 옵션</th>
+                    <td>
+                        <fieldset>
+                            <input type="radio" id="radio-3" name="apply" checked>
+                            <label for="radio-3">클래스 적용(기본)</label>
+                            <input type="radio" id="radio-4" name="apply">
+                            <label for="radio-4">클래스 미적용</label>
+                        </fieldset>
+                        <div style="display: flex;flex-wrap: wrap;">
+                            <input type="text" class="option2" placeholder="1번 class(없으면 X)">
+                            <input type="text" class="option2" placeholder="2번 class(없으면 X)">
+                            <input type="text" class="option2" placeholder="3번 class(없으면 X)">
+                            <input type="text" class="option2" placeholder="4번 class(없으면 X)">
+                            <button type="button" class="add">추가</button>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <th>데이터(tbody에 들어갈 값만)</th>
+                    <td>
+                        <!-- 예시 -->
+                        <textarea rows="10">
+IN0001	항목 1	설명 1	₩51.00	25	29	13
+IN0002	항목 2	설명 2	₩93.00	132	231	4
+IN0003	항목 3	설명 3	₩57.00	151	114	11
+IN0004	항목 4	설명 4	₩19.00	186	158	6
+IN0005	항목 5	설명 5	₩75.00	62	39	12
+IN0006	항목 6	설명 6	₩11.00	5	9	13
+IN0007	항목 7	설명 7	₩56.00	58	109	7
+IN0008	항목 8	설명 8	₩38.00	101	162	3
+IN0009	항목 9	설명 9	₩59.00	122	82	3
+IN0010	항목 10	설명 10	₩50.00	175	283	8
+IN0011	항목 11	설명 11	₩59.00	176	229	1
+IN0012	항목 12	설명 12	₩18.00	22	36	12
+IN0013	항목 13	설명 13	₩26.00	72	102	9
+IN0014	항목 14	설명 14	₩42.00	62	83	2
+IN0015	항목 15	설명 15	₩32.00	46	23	15
+IN0016	항목 16	설명 16	₩90.00	96	180	3
+IN0017	항목 17	설명 17	₩97.00	57	98	12
+IN0018	항목 18	설명 18	₩12.00	6	7	13
+IN0019	항목 19	설명 19	₩82.00	143	164	12
+IN0020	항목 20	설명 20	₩16.00	124	113	14
+IN0021	항목 21	설명 21	₩19.00	112	75	11
+IN0022	항목 22	설명 22	₩24.00	182	132	15
+IN0023	항목 23	설명 23	₩29.00	106	142	1
+IN0024	항목 24	설명 24	₩75.00	173	127	9
+IN0025	항목 25	설명 25	₩14.00	28	21	8
+                        </textarea>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="btn-container">
+            <button type="button" class="init">초기화</button>
+            <button type="button" class="action">실행</button>
+            <button type="button" class="re-action">재실행</button>
+            <button type="button" class="part-change">일괄변경</button>
+            <button type="button" class="copy">복사</button>
+        </div>
+    </div>
+
+    <div class="box">
+        <div id="result"></div>
+        <pre id="text"></pre>
+    </div>
+
+    <div class="target-detail-popup">
+        <table>
+            <tbody>
+                <tr>
+                    <th>text</th>
+                    <td><input type="text" class="text"></td>
+                </tr>
+                <tr>
+                    <th>class</th>
+                    <td><input type="text" class="class"></td>
+                </tr>
+                <tr>
+                    <th>colspan</th>
+                    <td><input type="number" class="colspan"></td>
+                </tr>
+                <tr>
+                    <th>rowspan</th>
+                    <td><input type="number" class="rowspan"></td>
+                </tr>
+                <tr>
+                    <th>추가 TAG</th>
+                    <td><textarea name="" id="" cols="30" rows="10" class="tag"></textarea></td>
+                </tr>
+            </tbody>
+        </table>
+        <div class="btn-container">
+            <button type="button" class="action">수정</button>
+            <button type="button" class="init">삭제</button>
+        </div>
+        <button type="button" class="close">X</button>
+    </div>
+
+    <div class="part-change-popup">
+        <p style="font-size: 12px;">
+            일괄변경은 첫번째 td만 가능합니다...😒
+            <br>
+
+            ** 일괄변경은 재실행 전에 해야 합니다...(클래스 미적용도 같이)
+        </p>
+        <table>
+            <tbody>
+                    <th>변경 TAG</th>
+                    <td><input type="text" class="change-tag" placeholder="th"></td>
+                </tr>        
+                <tr>
+                    <th>추가 속성</th>
+                    <td><input type="text" class="add-attribute" placeholder='scope="row"'></td>
+                </tr>
+            </tbody>
+        </table>
+        <div class="btn-container">
+            <button type="button" class="action">수정</button>
+        </div>
+        <button type="button" class="close">X</button>
+    </div>
+
+    <script src="./script.js"></script>
+</body>
+
+</html>
