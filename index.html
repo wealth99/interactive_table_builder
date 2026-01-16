@@ -131,13 +131,32 @@ IN0025	항목 25	설명 25	₩14.00	28	21	8
 
     <div class="part-change-popup">
         <p style="font-size: 12px;">
-            일괄변경은 첫번째 td만 가능합니다...😒
+            일괄변경 대상 선택 후 진행하세요...😒
             <br>
 
             ** 일괄변경은 재실행 전에 해야 합니다...(클래스 미적용도 같이)
         </p>
         <table>
             <tbody>
+                <tr>
+                    <th>변경 대상</th>
+                    <td>
+                        <fieldset>
+                            <input type="radio" id="target-row" name="change-target" value="row" checked>
+                            <label for="target-row">행(Row) 선택</label>
+                            <input type="radio" id="target-col" name="change-target" value="col">
+                            <label for="target-col">열(Column) 선택</label>
+                        </fieldset>
+                        <div style="font-size: 11px; color: #666; margin-top: 5px;">
+                            행: 첫 번째 열(TD)만 변경 / 열: 선택한 열의 모든 셀 변경
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <th>선택 번호</th>
+                    <td><input type="text" class="change-index" placeholder="숫자 or all"></td>
+                </tr>
+                <tr>
                     <th>변경 TAG</th>
                     <td><input type="text" class="change-tag" placeholder="th"></td>
                 </tr>        

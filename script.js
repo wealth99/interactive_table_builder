@@ -4,6 +4,8 @@ let isRender = false;
 let currentTarget;
 let classOption = [];
 let classOption2 = [];
+let selectedTargets = [];  // 추가: 다중 선택 추적
+let firstSelectedTarget = null;  // 추가: 첫 번째 선택된 타겟
 
 document.addEventListener('DOMContentLoaded', () => {
     const options = document.querySelectorAll('.option');
@@ -40,29 +42,70 @@ document.addEventListener('DOMContentLoaded', () => {
     options.forEach(option => option.addEventListener('change', setClassOption));
     options2.forEach(option => option.addEventListener('change', setClassOption2));
 
-    // textarea.addEventListener('keydown' , handleTextareaKeydown);
     document.addEventListener('keydown', handleDocumentKeydown);
     document.addEventListener('click', handleDocumentClick);
 });
 
-// textarea 키보드 이벤트 (사용 X)
-const handleTextareaKeydown = e => {
-    const target = e.target;
-
-    // tab 키 사용 허용
-    if (e.key === 'Tab') {
-        e.preventDefault();
-
-        const start = target.selectionStart;
-        const end = target.selectionEnd;
-        const value = target.value;
-
-        target.value = value.substring(0, start) + '\t' + value.substring(end);
-        target.selectionStart = target.selectionEnd = start + 1;
+// 추가: 선택된 셀들 병합하기
+const mergeSelectedTargets = () => {
+    if(selectedTargets.length < 2) {
+        alert('2개 이상의 셀을 선택해주세요...😒');
+        return;
     }
+
+    const mergedText = selectedTargets.map(cell => cell.textContent).join(' ');
+    firstSelectedTarget.textContent = mergedText;
+
+    // 나머지 선택된 셀들 삭제
+    for(let i = 1; i < selectedTargets.length; i++) {
+        const cell = selectedTargets[i];
+        const parentTr = cell.closest('tr');
+
+        cell.nextSibling?.nodeName === '#text' && cell.nextSibling.remove();
+        cell.remove();
+
+        if(parentTr && parentTr.children.length === 0) {
+            parentTr.remove();
+        }
+    }
+
+    // 선택 상태 초기화
+    clearMultiSelection();
+    isUpdate = true;
+    isDelete = true;
 }
 
-// document 클릭 이벤트 (팝업 오픈시 적용)
+// 추가: 다중 선택 상태 초기화
+const clearMultiSelection = () => {
+    selectedTargets.forEach(cell => {
+        cell.classList.remove('multi-selected');
+    });
+    selectedTargets = [];
+    firstSelectedTarget = null;
+
+    const mergeBtn = document.querySelector('.merge-selected');
+    if(mergeBtn) mergeBtn.remove();
+}
+
+// 추가: 다중 선택 버튼 생성
+const createMergeButton = (x, y) => {
+    const existingBtn = document.querySelector('.merge-selected');
+    if(existingBtn) existingBtn.remove();
+
+    const mergeBtn = document.createElement('button');
+    mergeBtn.type = 'button';
+    mergeBtn.className = 'merge-selected';
+    mergeBtn.textContent = '병합';
+    mergeBtn.style.position = 'fixed';
+    mergeBtn.style.left = (x + 10) + 'px';
+    mergeBtn.style.top = (y + 10) + 'px';
+    mergeBtn.style.zIndex = '10000';
+    mergeBtn.addEventListener('click', mergeSelectedTargets);
+
+    document.body.appendChild(mergeBtn);
+}
+
+// document 클릭 이벤트 수정
 const handleDocumentClick = e => {
     const isPopupOpen = document.querySelector('.target-detail-popup').classList.contains('show');
 
@@ -74,17 +117,22 @@ const handleDocumentClick = e => {
     if(!isPopup) closeDetailPopup();
 }
 
-// document 키보드 이벤트 (팝업 오픈시 적용)
+// document 키보드 이벤트 수정
 const handleDocumentKeydown = e => {
     const isPopupOpen = document.querySelector('.target-detail-popup').classList.contains('show');
     const key = e.key.toLowerCase();
 
-    if(!isPopupOpen) return;
-    
     switch (key) {
-        // case 'enter': updateTarget(); break;
-        case 'escape': closeDetailPopup(); break;
-        case 'delete': removeTarget(); break;
+        case 'escape':
+            if(selectedTargets.length > 0) {
+                clearMultiSelection();
+            } else if(isPopupOpen) {
+                closeDetailPopup();
+            }
+            break;
+        case 'delete':
+            if(isPopupOpen) removeTarget();
+            break;
     }
 }
 
@@ -97,7 +145,7 @@ const updateTarget = () => {
     const rowspan = popup.querySelector('.rowspan');
     const addTag = popup.querySelector('.tag');
     
-    // currentTarget.textContent = text.value;
+    currentTarget.textContent = text.value;
 
     if(_class.value !== '') {
         currentTarget.className = `${_class.value}`;
@@ -107,7 +155,6 @@ const updateTarget = () => {
 
     colspan.value !== '' ? currentTarget.setAttribute('colspan', `${colspan.value}`) : currentTarget.removeAttribute('colspan');
     rowspan.value !== '' ? currentTarget.setAttribute('rowspan', `${rowspan.value}`) : currentTarget.removeAttribute('rowspan');
-    //currentTarget.insertAdjacentHTML('beforeend', addTag.value);
 
     closeDetailPopup();
 
@@ -174,10 +221,46 @@ const closeDetailPopup = () => {
     currentTarget = null;
 }
 
-// 팝업 열기 (target-datial-popup)
+// 팝업 열기 (target-datial-popup) 수정
 const openDetailPopup = e => {
     e.stopPropagation();
     if(e.target.nodeName === 'TABLE') return;
+
+    // 추가: Shift+클릭 처리
+    if(e.shiftKey) {
+        const target = e.target.nodeName !== "TD" && e.target.nodeName !== "TH" ? e.target.closest('td') : e.target;
+        
+        if(!target) return;
+
+        // 첫 번째 선택
+        if(selectedTargets.length === 0) {
+            firstSelectedTarget = target;
+            selectedTargets.push(target);
+            target.classList.add('multi-selected');
+            createMergeButton(e.clientX, e.clientY);
+        } else if(selectedTargets.includes(target)) {
+            // 이미 선택된 셀 제거
+            target.classList.remove('multi-selected');
+            selectedTargets = selectedTargets.filter(cell => cell !== target);
+            
+            if(selectedTargets.length === 0) {
+                clearMultiSelection();
+            } else {
+                createMergeButton(e.clientX, e.clientY);
+            }
+        } else {
+            // 새로운 셀 추가
+            selectedTargets.push(target);
+            target.classList.add('multi-selected');
+            createMergeButton(e.clientX, e.clientY);
+        }
+        return;
+    }
+
+    // 추가: 기존 다중 선택 상태 초기화
+    if(selectedTargets.length > 0) {
+        clearMultiSelection();
+    }
 
     if(currentTarget === e.target) {
         closeDetailPopup();
@@ -212,34 +295,118 @@ const openDetailPopup = e => {
 
 // 일괄 변경
 const updateChange = () => {
+    const changeTarget = document.querySelector('input[name=change-target]:checked').value;
+    const changeIndexInput = document.querySelector('.change-index').value.trim();
     const changeTag = document.querySelector('.change-tag');
     const addAttribute = document.querySelector('.add-attribute');
     const resultTable = document.querySelector('#result table');
+    
+    if(!changeIndexInput) {
+        alert('번호 또는 "all"을 입력해주세요...😒');
+        return;
+    }
+
+    const isAll = changeIndexInput.toLowerCase() === 'all';
+    const changeIndex = isAll ? null : parseInt(changeIndexInput);
+
+    if(!isAll && (!changeIndex || changeIndex < 1)) {
+        alert('올바른 번호를 입력해주세요...😒');
+        return;
+    }
+
     const isChangeValue = changeTag.value !== '';
     const matchResult = addAttribute.value.match(/([^=]+)="([^"]+)"/);
     const isMatchResult = matchResult !== null;
     const attributeName = isMatchResult && matchResult[1];
     const attributeContent = isMatchResult && matchResult[2];
 
-    resultTable.querySelectorAll('tr').forEach(v => {
-        const td = v.children[0];
-        let changeElement;
+    if(changeTarget === 'row') {
+        const rows = resultTable.querySelectorAll('tr');
+        
+        if(isAll) {
+            // 모든 행의 첫 번째 셀 변경
+            rows.forEach((tr, rowIndex) => {
+                const td = tr.children[0];
+                
+                if(isChangeValue) {
+                    const changeElement = document.createElement(changeTag.value);
+                    changeElement.innerHTML = td.innerHTML;
+                    isMatchResult && changeElement.setAttribute(attributeName, attributeContent);
+                    td.parentNode.replaceChild(changeElement, td);
+                } else {
+                    isMatchResult && td.setAttribute(attributeName, attributeContent);
+                }
+            });
+        } else {
+            // 특정 행의 첫 번째 셀만 변경
+            if(changeIndex > rows.length) {
+                alert(`${rows.length}개 이하의 번호를 입력해주세요...😒`);
+                return;
+            }
 
-        if(isChangeValue) {
-            changeElement = document.createElement(`${changeTag.value}`);
-            changeElement.innerHTML = td.innerHTML;
-
-            isMatchResult && changeElement.setAttribute(attributeName, attributeContent);
-            td.parentNode.replaceChild(changeElement, td);
+            const tr = rows[changeIndex - 1];
+            const td = tr.children[0];
+            
+            if(isChangeValue) {
+                const changeElement = document.createElement(changeTag.value);
+                changeElement.innerHTML = td.innerHTML;
+                isMatchResult && changeElement.setAttribute(attributeName, attributeContent);
+                td.parentNode.replaceChild(changeElement, td);
+            } else {
+                isMatchResult && td.setAttribute(attributeName, attributeContent);
+            }
         }
+    } else if(changeTarget === 'col') {
+        const rows = resultTable.querySelectorAll('tr');
+        
+        if(isAll) {
+            // 모든 열의 첫 번째 행의 셀 변경
+            if(rows.length > 0) {
+                Array.from(rows[0].children).forEach((td) => {
+                    if(isChangeValue) {
+                        const changeElement = document.createElement(changeTag.value);
+                        changeElement.innerHTML = td.innerHTML;
+                        isMatchResult && changeElement.setAttribute(attributeName, attributeContent);
+                        td.parentNode.replaceChild(changeElement, td);
+                    } else {
+                        isMatchResult && td.setAttribute(attributeName, attributeContent);
+                    }
+                });
+            }
+        } else {
+            // 특정 열의 첫 번째 행의 셀만 변경
+            let maxCols = 0;
+            rows.forEach(tr => {
+                maxCols = Math.max(maxCols, tr.children.length);
+            });
 
-        isMatchResult && td.setAttribute(attributeName, attributeContent);
-    });
+            if(changeIndex > maxCols) {
+                alert(`${maxCols}개 이하의 번호를 입력해주세요...😒`);
+                return;
+            }
+
+            if(rows.length > 0) {
+                const td = rows[0].children[changeIndex - 1];
+                
+                if(td) {
+                    if(isChangeValue) {
+                        const changeElement = document.createElement(changeTag.value);
+                        changeElement.innerHTML = td.innerHTML;
+                        isMatchResult && changeElement.setAttribute(attributeName, attributeContent);
+                        td.parentNode.replaceChild(changeElement, td);
+                    } else {
+                        isMatchResult && td.setAttribute(attributeName, attributeContent);
+                    }
+                }
+            }
+        }
+    }
 
     closePartChangePopup();
 
     changeTag.value = '';
     addAttribute.value = '';
+    document.querySelector('.change-index').value = '';
 
     isUpdate = true;
 }
@@ -282,6 +449,7 @@ const reset = () => {
     isUpdate =  false;
 
     closeDetailPopup();
+    clearMultiSelection();  // 추가
     setDetailPopupData({ text: '', class: '', colspan: '', rowspan: '', addTag: '' });
 }
 
@@ -316,14 +484,6 @@ const setClipboard = () => {
 // table, text dom에 render
 const render = () => {
     const textArea = document.querySelector('textarea');
-    // const textArray = textArea.value.trim().split('\n');
-    /*
-        글자\n글자        탭 없음	✂️ 자름	일반 문단
-        글자\t\n글자 	  탭 없음	✂️ 자름	리스트 끝남
-        글자\t\n\t\t글자  탭 있음   ✂️ 자름	하위 레벨 시작
-        글자\t\n\t글자    탭 있음	🛡️ 보호 리스트 연속
-        글자\n\t\t글자    탭 없음	🛡️ 보호 부연 설명 연결
-    */
     const textArray = textArea.value.trim().split(/(?<!\t)\n(?!\t\t)|(?<=\t)\n(?!\t)|(?<=\t)\n(?=\t\t)|(?<=[^\n]\t[^\n]*\t)\n(?=\t)/);
     const direction = getOrderDirection();
     const classCheck = isClassApply();
@@ -347,8 +507,8 @@ const render = () => {
     const html = textArray.reduce((acc, row, index) => {
         const cell = row
             .trim()
-            .replace(/\n\t\t/g, '<br>')  // 핵심: 보호된 '\n\t\t'를 HTML 줄바꿈으로 변환
-            .replace(/\t\n\t/g, '<br>')  // 나머지 줄바꿈도 HTML 줄바꿈으로 변환
+            .replace(/\n\t\t/g, '<br>')
+            .replace(/\t\n\t/g, '<br>')
             .split('\t')
             .filter(item => item !== "");
 
@@ -370,7 +530,6 @@ const render = () => {
                 ? ` class="${classOption2[j]}"` 
                 : '';
             
-            // cell[j]가 존재하면 trim(), 없으면 빈 문자열
             const cellValue = cell[j] ? cell[j].trim() : '';
 
             acc += `            <td${tdClass}>${cellValue}</td>\n`;

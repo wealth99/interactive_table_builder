@@ -3,11 +3,12 @@ html, body {max-width: 1200px;margin: 0 auto;padding: 0 20px;font-size: 12px;scr
 input[type=text], input[type=number] {width: 150px;height: 30px;margin: 0;margin-right: 5px;padding: 0 5px;border-radius: 5px;border: 1px solid #c5ccd6;box-sizing: border-box;}
 input[type=radio] {margin-top: 0;}
 table td, table th {padding: 5px;}
+table th {background-color: #eff2f8;}
 
 .toolbar {padding: 20px 0;}
 .toolbar table td, table th {cursor: pointer;}
 .toolbar table {table-layout: fixed;width: 100%;border-top: 1px solid #5a6375;border-collapse: collapse;}
-.toolbar table th {background-color: #eff2f8;}
+/* .toolbar table th {background-color: #eff2f8;} */
 .toolbar textarea {width: 100%;box-sizing: border-box;}
 .toolbar fieldset {display: flex;align-items:center;margin: 0 0 10px;padding: 0;border: 0;font-size: 12px;}
 .toolbar table + .btn-container {margin-top: 20px;}
@@ -26,7 +27,7 @@ button.add {width: 50px;background-color: #0061f2;}
 .box table tr {position: relative;counter-increment: items;}
 .box table tr td:first-child::before {content: counter(items) '. ';position: absolute;left: -30px;display: flex;background-color: #ff9a15;}
 .box table tr th:first-child::before {content: counter(items) '. ';position: absolute;left: -30px;display: flex;background-color: #ff9a15;}
-.box table td, .box table th {border-bottom: 1px solid #c5ccd6;border-right: 1px solid #c5ccd6;font-weight: 400;cursor: pointer;}
+.box table td, .box table th {border-bottom: 1px solid #c5ccd6;border-right: 1px solid #c5ccd6;font-weight: 400;cursor: pointer;user-select: none;}
 .box .target {background-color: #14ff00;}
 
 .target-detail-popup {position: absolute;top: 0;left: 0;display:none;width: 350px;border: 1px solid #5a6375;background-color: #fff;}
@@ -39,3 +40,6 @@ button.add {width: 50px;background-color: #0061f2;}
 .part-change-popup {position: fixed;top: 50%;left: 50%;transform: translate(-50%, -50%);display: none;padding: 20px;border: 1px solid black;background-color: #fff;}
 .part-change-popup.show {display: block;}
 .part-change-popup .close {position: absolute; top: 5px; right: 5px;width: auto;height: auto;padding: 0;color: black;background: transparent;font-size: 16px;}
+
+.multi-selected {background-color: #ffeb3b;}
+.merge-selected {background-color: #9c27b0 !important;color: white !important;}
